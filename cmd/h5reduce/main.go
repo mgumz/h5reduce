@@ -22,14 +22,15 @@ const (
 func main() {
 
 	var (
-		mode                     = HtmlMode
-		in             io.Reader = os.Stdin
-		out            io.Writer = os.Stdout
-		iname                    = flag.String("i", "", "input file (default: stdin)")
-		oname                    = flag.String("o", "", "output file (default: stdout)")
-		print_stats              = flag.Bool("stats", false, "print stats")
-		strip_comments           = flag.Bool("strip-comments", true, "strip away (most) comments")
-		html_flags               = struct{ nl, allow_cdata *bool }{
+		mode                         = HtmlMode
+		in                 io.Reader = os.Stdin
+		out                io.Writer = os.Stdout
+		iname                        = flag.String("i", "", "input file (default: stdin)")
+		oname                        = flag.String("o", "", "output file (default: stdout)")
+		print_stats                  = flag.Bool("stats", false, "print stats")
+		strip_comments               = flag.Bool("strip-comments", true, "strip away (most) comments")
+		keep_excl_comments           = flag.Bool("keep-excl-comments", true, "don't stip away /*! or <!--! comments")
+		html_flags                   = struct{ nl, allow_cdata *bool }{
 			nl:          flag.Bool("html-nl", true, "place some additional newlines"),
 			allow_cdata: flag.Bool("html-cdata", true, "treat cdata as text-token (not as comment)"),
 		}
@@ -94,6 +95,9 @@ func main() {
 		opts := make([]css.Config, 0)
 		if *css_flags.nl {
 			opts = append(opts, css.AddLineBreaks)
+		}
+		if *keep_excl_comments {
+			opts = append(opts, css.KeepExclamationComments)
 		}
 		err = css.Reduce(out, in, opts...)
 	}

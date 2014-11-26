@@ -1,11 +1,14 @@
 package css
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 
 	"github.com/gorilla/css/scanner"
 )
+
+const PREFIX_EXCL_COMMENT = "/*!"
 
 type Config func(*reducer) error
 
@@ -33,6 +36,14 @@ func Reduce(out io.Writer, in io.Reader, configs ...Config) (err error) {
 
 		switch r.cur.Type {
 		case scanner.TokenComment, scanner.TokenS:
+			if r.cur.Type == scanner.TokenComment {
+				if r.config.keep_exclamation_comment([]byte(r.cur.Value)) {
+					io.WriteString(out, r.cur.Value)
+					r.cur.Value = ""
+					r.on_hold = r.cur
+					continue
+				}
+			}
 			if r.on_hold == nil && (r.cur.Value == " " || r.cur.Value == "\t") {
 				r.cur.Value = " "
 				r.on_hold = write_on_change(out, r.on_hold, r.cur)
@@ -43,9 +54,7 @@ func Reduce(out io.Writer, in io.Reader, configs ...Config) (err error) {
 			case "}":
 				r.on_hold = nil
 				io.WriteString(out, "}")
-				if r.config.linebreaks {
-					io.WriteString(out, "\n")
-				}
+				r.config.linebreak(out)
 				continue
 			case ";", "{", ",", ".", ":":
 				if r.on_hold != nil && r.on_hold.Type == scanner.TokenS {
@@ -55,14 +64,25 @@ func Reduce(out io.Writer, in io.Reader, configs ...Config) (err error) {
 				continue
 			}
 		}
+		// default-mode: copy each char. using 'nil' as the
+		// 2nd parameter ensures this.
 		r.on_hold = write_on_change(out, r.on_hold, nil)
 		io.WriteString(out, r.cur.Value)
 	}
 	return
 }
 
+// add linebreaks after each rule
 func AddLineBreaks(r *reducer) error {
-	r.config.linebreaks = true
+	r.config.linebreak = func(w io.Writer) { io.WriteString(w, "\n") }
+	return nil
+}
+
+// keeps comments like /*! this */
+func KeepExclamationComments(r *reducer) error {
+	r.config.keep_exclamation_comment = func(comment []byte) bool {
+		return bytes.HasPrefix(comment, []byte(PREFIX_EXCL_COMMENT))
+	}
 	return nil
 }
 
@@ -74,11 +94,12 @@ type (
 	reducer struct {
 		*scanner.Scanner
 		cur     *scanner.Token
-		on_hold *scanner.Token
+		on_hold *scanner.Token // postpone the last token
 		config  rconfig
 	}
 	rconfig struct {
-		linebreaks bool
+		linebreak                func(io.Writer)
+		keep_exclamation_comment func([]byte) bool
 	}
 )
 
@@ -90,6 +111,10 @@ func newReducer(reader io.Reader) (r *reducer, err error) {
 	return &reducer{
 		Scanner: scanner.New(string(css)),
 		cur:     &scanner.Token{Type: scanner.TokenEOF},
+		config: rconfig{
+			linebreak:                func(io.Writer) {}, // nop
+			keep_exclamation_comment: func([]byte) bool { return false },
+		},
 	}, nil
 }
 

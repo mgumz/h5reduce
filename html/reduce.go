@@ -1,6 +1,10 @@
-package html
+// copyright 2015 by mathias gumz. all rights reserved. see the LICENSE
+// file for more information.
 
-// package h5reduce offers means to reduce the size of a given html-document
+// package 'html' offers means to reduce the size of a given html-document
+// it's similar naive and simplistic as 'css' but it yields good-enough
+// results to be usable.
+package html
 
 import (
 	"bytes"
@@ -13,14 +17,9 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-// ========================================================================
-// public
-//
-
-type Config func(*tokenizer) error
-
 // reads html-document from 'reader' and writes the reduced form of the document
 // to 'writer'. example:
+//
 //     ReduceFile(os.Stdout, "index.html", AddExtraNewlines)
 //
 // 'Reduce' tries to not change any semantics of the given document. eg, it
@@ -53,6 +52,9 @@ func ReduceFile(writer io.Writer, path string, configs ...Config) error {
 	defer file.Close()
 	return Reduce(writer, file, configs...)
 }
+
+// func-type to tweak the way html.Reduce() works
+type Config func(*tokenizer) error
 
 // config-option: add a newline after certain html-tags to keep
 // some readability in the reduced document. newlines are added after

@@ -1,6 +1,9 @@
-package main
+// copyright 2015 by mathias gumz. all rights reserved. see the LICENSE
+// file for more information.
 
-// h5reduce
+// command h5reduce reduces the size of html5 and css-files by removing
+// superfluous whitespaces and applying other simple modifications.
+package main
 
 import (
 	"flag"
@@ -10,8 +13,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"2hoch5.com/h5reduce/css"
-	"2hoch5.com/h5reduce/html"
+	"github.com/mgumz/h5reduce/css"
+	"github.com/mgumz/h5reduce/html"
 )
 
 const (
@@ -29,7 +32,7 @@ func main() {
 		oname                        = flag.String("o", "", "output file (default: stdout)")
 		print_stats                  = flag.Bool("stats", false, "print stats")
 		strip_comments               = flag.Bool("strip-comments", true, "strip away (most) comments")
-		keep_excl_comments           = flag.Bool("keep-excl-comments", true, "don't stip away /*! or <!--! comments")
+		keep_excl_comments           = flag.Bool("keep-excl-comments", true, "don't strip away /*! or <!--! comments")
 		html_flags                   = struct{ nl, allow_cdata *bool }{
 			nl:          flag.Bool("html-nl", true, "place some additional newlines"),
 			allow_cdata: flag.Bool("html-cdata", true, "treat cdata as text-token (not as comment)"),

@@ -1,3 +1,16 @@
+// copyright 2015 by mathias gumz. all rights reserved. see the LICENSE
+// file for more information.
+
+// package 'css' helps to reduce the file-size of a given .css-file.
+// it takes a very simple and naive approach to css-minification:
+//
+//  * ignore linebreaks
+//  * condense multiples spaces/tabs into one " "
+//  * ignore whitespace before/after "{", ",", ":", ".", ";"
+//  * ignore comments
+//
+//  * add linebreaks after "}" (optional)
+//
 package css
 
 import (
@@ -10,16 +23,10 @@ import (
 
 const PREFIX_EXCL_COMMENT = "/*!"
 
-type Config func(*reducer) error
-
-// a very simple and naive approach to css-minification:
-//
-//  * ignore linebreaks
-//  * condense multiples spaces/tabs into one " "
-//  * ignore whitespace before/after "{", ",", ":", ".", ";"
-//  * ignore comments
-//
-//  * add linebreaks after "}" (optional)
+// reads from 'in' and applies the rules sketched out above to reduce
+// the bytes written to 'out' by not break anything. the output can be
+// tweaked by adding several config functions, see css.AddLineBreaks and
+// css.KeepExclamationComments
 func Reduce(out io.Writer, in io.Reader, configs ...Config) (err error) {
 
 	var r *reducer
@@ -71,6 +78,9 @@ func Reduce(out io.Writer, in io.Reader, configs ...Config) (err error) {
 	}
 	return
 }
+
+// func-type to tweak the way css.Reduce() works
+type Config func(*reducer) error
 
 // add linebreaks after each rule
 func AddLineBreaks(r *reducer) error {

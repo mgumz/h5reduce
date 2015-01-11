@@ -1,3 +1,6 @@
+// copyright 2015 by mathias gumz. all rights reserved. see the LICENSE
+// file for more information.
+
 package css
 
 import (
